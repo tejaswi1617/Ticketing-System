@@ -1,0 +1,3 @@
+jdbc:mysql://db-5308.cs.dal.ca:3306/CSCI5308_2_DEVINT?serverTimezone=UTC
+CSCI5308_2_DEVINT_USER
+EwsTSqCdFPubhD8n

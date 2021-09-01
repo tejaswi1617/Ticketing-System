@@ -1,0 +1,74 @@
+# This YAML file demonstrates building a gradle console app and deploying it to your
+# Timberlea account via secure copy.
+
+# NOTE: It does not upload your test results to GitLab, you will need
+# to figure that out still.
+
+# NOTE: You will need to adjust the following variable to the build output of your app
+#       right now it's configured to deploy an Android APK file from another class I taught.
+variables:
+  EXECUTABLE_TO_DEPLOY: "Group2/target"
+  #DESTINATION_FILE: "group2.jar"
+
+before_script:
+  # The following line is only necessary if using a docker-based runner.
+  #- apk add --no-cache openssh-client
+  #- chmod +x ./gradlew
+
+stages:
+  - build
+  - test
+  - deploy
+
+build:
+  stage: build
+  script:
+    - cd Group2
+    - mvn clean compile
+  artifacts:
+    paths:
+      - Group2/target
+  tags:
+    - ugrad
+
+test:
+  stage: test
+  script:
+    - cd Group2
+    - mvn clean verify
+  artifacts:
+    when: always
+    reports:
+      junit:
+        - Group2/target/surefire-reports/TEST-*.xml
+  tags:
+    - ugrad
+    
+deployTest:
+  stage: deploy
+  tags:
+    - ugrad
+  artifacts:
+    paths:
+      - Group2/target
+  script:
+    - chmod og-rwx ${DEPLOY_SSH_KEY_P}
+    - scp -r -o StrictHostKeyChecking=no -i "${DEPLOY_SSH_KEY_P}" ${EXECUTABLE_TO_DEPLOY} "${DEPLOY_USER_PROD}@${DEPLOY_HOST}:${DEPLOY_DIR}/"
+  environment:
+    name: Production
+  only:
+    - master
+
+deployProd:
+  stage: deploy
+  tags:
+    - ugrad
+  artifacts:
+    paths:
+      - Group2/target
+  script:
+    - scp -r -o StrictHostKeyChecking=no -i "${DEPLOY_SSH_KEY}" ${EXECUTABLE_TO_DEPLOY} "${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_DIR}/"
+  environment:
+    name: Test
+  only:
+    - release
